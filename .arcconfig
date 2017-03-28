@@ -1,4 +1,3 @@
 {
-    "phabricator.uri": "http://phab.couchmate.io",
-    "repository.callsign": "TCP"
+    "phabricator.uri": "https://phabricator.corp.mparticle.com"
 }
