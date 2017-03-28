@@ -1,16 +1,11 @@
 package com.couchmate.teamcity.phabricator;
 
-import com.couchmate.teamcity.phabricator.conduit.*;
+import com.couchmate.teamcity.phabricator.clients.ConduitClient;
 
-import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.messages.BuildMessage1;
 import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.tests.TestInfo;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.net.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -28,16 +23,16 @@ public class Server extends BuildServerAdapter {
     ) {
         buildServerListener.addListener(this);
         this.logger = logger;
-        this.serverUrl = TCServerUrl.getServerUrl();
+        this.serverUrl = null;
     }
 
     @Override
     public void buildTypeAddedToQueue(@NotNull SQueuedBuild queuedBuild) {
         super.buildTypeAddedToQueue(queuedBuild);
-        if (!queuedBuild.getBuildType().getParameters().containsKey("serverUrl")) {
-            SimpleParameter tcServerUrl = new SimpleParameter("serverUrl", this.serverUrl);
-            queuedBuild.getBuildType().addParameter(tcServerUrl);
+        if (queuedBuild.getBuildType().getParameters().containsKey("teamcity.serverUrl")) {
+            this.serverUrl = queuedBuild.getBuildType().getParameters().get("teamcity.serverUrl");
         }
+
         Collection<SBuildFeatureDescriptor> phabBuildFeature = queuedBuild.getBuildType().getBuildFeaturesOfType("phabricator");
         if (!phabBuildFeature.isEmpty()) {
             Map<String, String> params = new HashMap<>();

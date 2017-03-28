@@ -3,7 +3,7 @@
   <info>
     <name>teamcity-phabricator-plugin</name>
     <display-name>Phabricator TeamCity Integration</display-name>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <description>Integrate Phabricator's Harbormaster with TeamCity</description>
   </info>
   <deployment use-separate-classloader="true" />

@@ -1,6 +1,8 @@
 package com.couchmate.teamcity.phabricator.conduit;
 
 import com.google.gson.annotations.SerializedName;
+import groovy.json.JsonSlurper;
+import net.sf.json.JSONObject;
 
 public final class Result {
 
@@ -25,4 +27,8 @@ public final class Result {
     public String getErrorCode(){ return this.errorCode; }
     public String getErrorInfo(){ return this.errorInfo; }
 
+    public JSONObject getJsonResult() {
+        JsonSlurper jsonParser = new JsonSlurper();
+        return (JSONObject)jsonParser.parseText(this.result);
+    }
 }

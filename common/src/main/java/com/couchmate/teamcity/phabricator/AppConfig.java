@@ -1,10 +1,9 @@
 package com.couchmate.teamcity.phabricator;
 
-import jetbrains.buildServer.log.Loggers;
-
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Map;
+
 import static com.couchmate.teamcity.phabricator.CommonUtils.isNullOrEmpty;
 
 public final class AppConfig {
@@ -23,10 +22,8 @@ public final class AppConfig {
     private String harbormasterTargetPHID;
     private String serverUrl;
     private String workingDir;
-    private String errormsg;
     private Boolean shouldPatch = false;
     private Boolean reportBegin = false;
-    private Boolean reportEnd = false;
     private Boolean enabled = false;
 
     public AppConfig(){
@@ -38,18 +35,15 @@ public final class AppConfig {
     private final String CONDUIT_TOKEN = "tcphab.conduitToken";
     private final String CODE_LOCATION = "tcphab.pathToCode";
     private final String ARC_PATH = "tcphab.pathToArc";
-    private final String ERROR_MSG = "tcphab.errorInfo";
     private final String REPORT_BEGIN = "tcphab.reportBegin";
-    private final String REPORT_END = "tcphab.reportEnd";
     private final String PATCH = "tcphab.patch";
     private final String DIFF_ID = "diffId";
     private final String ENV_DIFF_ID = "env.diffId";
     private final String HARBORMASTER_PHID = "harbormasterTargetPHID";
     private final String ENV_HARBORMASTER_PHID = "env.harbormasterTargetPHID";
-    //TODO used for commenting on diffs eventually
     private final String REVISION_ID = "revisionId";
     private final String ENV_REVISION_ID = "env.revisionId";
-    private final String SERVER_URL = "serverUrl";
+    private final String SERVER_URL = "teamcity.serverUrl";
 
     public void parse(){
         enabled = false;
@@ -87,10 +81,6 @@ public final class AppConfig {
                         logger.info(String.format("We should do report_begin action: %s", params.get(REPORT_BEGIN)));
                         this.reportBegin = params.get(REPORT_BEGIN).equals("true") ? true : false;
                         break;
-                    case REPORT_END:
-                        logger.info(String.format("We should do report_end action: %s", params.get(REPORT_END)));
-                        this.reportEnd = params.get(REPORT_END).equals("true") ? true: false;
-                        break;
                     case ARC_PATH:
                         logger.info(String.format("Found arcPath: %s", params.get(ARC_PATH)));
                         this.arcPath = params.get(ARC_PATH);
@@ -111,10 +101,6 @@ public final class AppConfig {
                         logger.info(String.format("Found diffId: %s", params.get(DIFF_ID)));
                         this.diffId = isNullOrEmpty(this.diffId) ? params.get(DIFF_ID) : this.diffId;
                         logger.info(String.format("Set env diffId: %s", this.diffId));
-                        break;
-                    case ERROR_MSG:
-                        logger.info(String.format("Found Error Msg: %s", params.get(ERROR_MSG)));
-                        this.errormsg = params.get(ERROR_MSG);
                         break;
                     case ENV_HARBORMASTER_PHID:
                         logger.info(String.format("Found harbormasterTargetPHID: %s", params.get(ENV_HARBORMASTER_PHID)));
@@ -181,10 +167,6 @@ public final class AppConfig {
         return this.diffId;
     }
 
-    public String getErrorMsg() {
-        return this.errormsg;
-    }
-
     public String getRevisionId() {
         return this.revisionId;
     }
@@ -197,10 +179,6 @@ public final class AppConfig {
 
     public Boolean reportBegin() {
         return this.reportBegin;
-    }
-
-    public Boolean reportEnd() {
-        return this.reportEnd;
     }
 
     public Boolean shouldPatch() {

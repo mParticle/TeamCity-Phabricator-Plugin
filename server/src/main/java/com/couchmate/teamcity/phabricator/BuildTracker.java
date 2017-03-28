@@ -1,33 +1,28 @@
 package com.couchmate.teamcity.phabricator;
 
+import com.couchmate.teamcity.phabricator.clients.ConduitClient;
+import com.couchmate.teamcity.phabricator.conduit.DifferentialCommentMessage;
+import com.couchmate.teamcity.phabricator.conduit.HarbormasterBuildStatusMessage;
+import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.messages.Status;
 import jetbrains.buildServer.serverSide.BuildStatisticsOptions;
 import jetbrains.buildServer.serverSide.SRunningBuild;
-import jetbrains.buildServer.serverSide.STest;
 import jetbrains.buildServer.serverSide.STestRun;
-import com.couchmate.teamcity.phabricator.HttpClient;
-import com.couchmate.teamcity.phabricator.HttpRequestBuilder;
-import com.couchmate.teamcity.phabricator.conduit.*;
-import jetbrains.buildServer.messages.Status;
-import com.couchmate.teamcity.phabricator.PhabLogger;
-import jetbrains.buildServer.tests.TestInfo;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class BuildTracker {
+    private static Logger Log = Logger.getInstance(BuildTracker.class.getName());
 
     private SRunningBuild build;
     private AppConfig appConfig;
-    private Map<String, STest> tests;
     private ConduitClient conduitClient = null;
     private PhabLogger logger;
 
@@ -35,8 +30,7 @@ public class BuildTracker {
         this.build = build;
         this.appConfig = new AppConfig();
         this.logger = logger;
-        this.tests = new HashMap<>();
-        Loggers.SERVER.info("Tracking build" + build.getBuildNumber());
+        Log.info("Tracking build" + build.getBuildNumber());
     }
 
     public void run() {
@@ -54,37 +48,26 @@ public class BuildTracker {
                 this.appConfig.setParams(params);
                 this.appConfig.parse();
                 this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), this.logger);
-            } catch (Exception e) { Loggers.SERVER.error("BuildTracker Param Parse", e); }
+            } catch (Exception e) { Log.error("BuildTracker Param Parse", e); }
         }
+
         if (appConfig.isEnabled()) {
-            build.getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS)
-                    .getAllTests()
-                    .forEach(
-                            testRun -> {
-                                if(!this.tests.containsKey(testRun.getTest().getName().getAsString())) {
-                                    this.tests.put(testRun.getTest().getName().getAsString(),
-                                            testRun.getTest());
-                                    sendTestReport(testRun.getTest().getName().getAsString(),
-                                            testRun);
-                                }
-                            }
-                    );
-             String buildInfo = this.appConfig.getServerUrl() + "/viewLog.html?buildId=" + this.build.getBuildId();
+             ArrayList<UnitTestResult> testResults = createResults(build.getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS).getAllTests());
+
              Loggers.SERVER.info("is this build successful " + this.build.getBuildStatus().isSuccessful());
              Loggers.SERVER.info("this.appConfig.getRevisionId() = " + this.appConfig.getRevisionId());
              Status status = this.build.getBuildStatus();
-             if (this.appConfig.isEnabled() && this.appConfig.reportEnd()) {
-                 buildInfo = this.appConfig.getServerUrl() + "/viewLog.html?buildId=" + build.getBuildId();
-                 if (status.isFailed()) {
-                     this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build failed: " + buildInfo);
-                     this.conduitClient.submitHarbormasterMessage(this.appConfig.getHarbormasterTargetPHID(), "fail");
-                 } else if (status.isSuccessful()) {
-                     this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build successful: " + buildInfo);
-                     this.conduitClient.submitHarbormasterMessage(this.appConfig.getHarbormasterTargetPHID(), "pass");
-                 } else {
-                     this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build error: " + buildInfo);
-                     this.conduitClient.submitHarbormasterMessage(this.appConfig.getHarbormasterTargetPHID(), "fail");
-                 }
+             if (this.appConfig.isEnabled()) {
+                 HarbormasterBuildStatusMessage buildMessage = new HarbormasterBuildStatusMessage(
+                         this.appConfig.getConduitToken(),
+                         this.appConfig.getHarbormasterTargetPHID(),
+                         MessageType.fromStatus(status),
+                         testResults);
+                 this.conduitClient.submitHarbormasterMessage(buildMessage);
+
+                 String buildInfo = this.appConfig.getServerUrl() + "/viewLog.html?buildId=" + build.getBuildId();
+                 DifferentialCommentMessage comment = DifferentialCommentMessage.generateBuildMessage(MessageType.fromStatus(status), this.appConfig.getRevisionId(), buildInfo);
+                 this.conduitClient.submitDifferentialComment(comment);
              }
              Loggers.SERVER.info(this.build.getBuildNumber() + " finished");
         }
@@ -93,6 +76,20 @@ public class BuildTracker {
     private CloseableHttpClient createHttpClient() {
         HttpClient client = new HttpClient(true);
         return client.getCloseableHttpClient();
+    }
+
+    private static ArrayList<UnitTestResult> createResults(List<STestRun> tests)
+    {
+        ArrayList<UnitTestResult> results = new ArrayList<>();
+        for (STestRun test : tests) {
+            results.add(new UnitTestResult(
+                    test.getTest().getName().getAsString(),
+                    MessageType.fromStatus(test.getStatus()),
+                    test.getTest().getName().getClassName(),
+                    test.getDuration()));
+        }
+
+        return results;
     }
 
     private void sendTestReport(String testName, STestRun test) {

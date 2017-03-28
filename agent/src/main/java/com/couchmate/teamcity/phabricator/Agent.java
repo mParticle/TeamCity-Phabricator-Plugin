@@ -1,8 +1,9 @@
 package com.couchmate.teamcity.phabricator;
 
+import com.couchmate.teamcity.phabricator.clients.ConduitClient;
+import com.couchmate.teamcity.phabricator.conduit.DifferentialCommentMessage;
 import com.couchmate.teamcity.phabricator.tasks.ApplyPatch;
-import com.couchmate.teamcity.phabricator.conduit.*;
-import com.couchmate.teamcity.phabricator.tasks.HarbormasterBuildStatus;
+import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.agent.*;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,7 @@ import java.util.Map;
 
 public class Agent extends AgentLifeCycleAdapter {
 
+    private static Logger Log = Logger.getInstance(ConduitClient.class.getName());
     private BuildProgressLogger buildLogger = null;
     private PhabLogger logger = null;
     private AppConfig appConfig = null;
@@ -64,14 +66,28 @@ public class Agent extends AgentLifeCycleAdapter {
         super.beforeRunnerStart(runner);
         this.refreshConfig(runner.getBuild());
         if (this.appConfig.isEnabled() && this.unique.get(this.appConfig.getHarbormasterTargetPHID()) == 1) {
-            this.logger.info("Getting Build Id " + runner.getBuild().getBuildId());
-            this.logger.info("Plugin is enabled, starting patch process");
+            Log.info("Getting Build Id " + runner.getBuild().getBuildId());
+            Log.info("Plugin is enabled, starting patch process");
             this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
-            this.logger.info("working dir = " + this.appConfig.getWorkingDir());
+            Log.info("working dir = " + this.appConfig.getWorkingDir());
             this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), this.logger);
             if(this.appConfig.shouldPatch()) {
-                new ApplyPatch(runner, this.appConfig).run();
-                this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build started: " + this.appConfig.getServerUrl() + "/viewLog.html?buildId=" + runner.getBuild().getBuildId());
+                DifferentialReview review = new DifferentialReview(this.conduitClient);
+                if (!review.fetchReviewData(this.appConfig.getDiffId()))
+                {
+                    Log.warn("Failed to fetch the full diff information from Phabricator.");
+                }
+                else
+                {
+                    new ApplyPatch(runner, this.appConfig, review).run();
+
+                    // Notify Phabricator that the build has started.
+                    DifferentialCommentMessage message = new DifferentialCommentMessage(
+                            this.appConfig.getConduitToken(),
+                            this.appConfig.getRevisionId(),
+                            "Build started: " + this.appConfig.getServerUrl() + "/viewLog.html?buildId=" + runner.getBuild().getBuildId());
+                    this.conduitClient.submitDifferentialComment(message);
+                }
             }
         }
     }
