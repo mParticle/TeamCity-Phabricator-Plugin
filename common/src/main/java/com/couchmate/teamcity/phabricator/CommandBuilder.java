@@ -1,5 +1,8 @@
 package com.couchmate.teamcity.phabricator;
 
+import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.log.Loggers;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,23 +130,20 @@ public final class CommandBuilder {
         private final File workingDir;
         private ProcessBuilder processBuilder;
         private Process process;
-        private PhabLogger logger;
-        private Command(){
-            this.workingDir = null;
-        }
+        private Logger logger = Loggers.AGENT;
 
         public Command(
                 final String[] args,
                 final String workingDir
         ){
             this.workingDir = isNullOrEmpty(workingDir) ? null : new File(workingDir);
-            this.logger = new PhabLogger();
             this.processBuilder = new ProcessBuilder(args);
             this.processBuilder.directory(this.workingDir);
             this.processBuilder.inheritIO();
         }
 
         public Command exec(){
+            logger.info("Phabricator is running: " + this.toString());
             try{ process = this.processBuilder.start(); }
             catch (Exception e) { logger.warn(e.getMessage(), e); }
             return this;
@@ -152,6 +152,17 @@ public final class CommandBuilder {
         public int join(){
             try{ return this.process.waitFor(); }
             catch (Exception e) { logger.warn(e.getMessage(), e); return 666; }
+        }
+
+        public String toString()
+        {
+            String command = "";
+            for (String s : this.processBuilder.command())
+            {
+                command = command + s + " ";
+            }
+
+            return command;
         }
 
     }

@@ -18,6 +18,7 @@ public class DifferentialReview {
     private String authorEmail = "unknown";
     private String branch = "master";
     private String baseCommit = "";
+    private String revisionId = "";
 
     public DifferentialReview(ConduitClient conduit){
         this.conduitClient = conduit;
@@ -27,6 +28,7 @@ public class DifferentialReview {
     public String getAuthorEmail() { return this.authorEmail; }
     public String getBranch() { return this.branch; }
     public String getBaseCommit() { return this.baseCommit; }
+    public String getRevisionId() { return this.revisionId; }
     public String getDiffId() { return this.diffId; }
 
     public boolean fetchReviewData(String diffId) {
@@ -44,14 +46,12 @@ public class DifferentialReview {
             return false;
         }
 
-
-            JsonObject diff = result.getJsonResult().getAsJsonObject(this.diffId);
-            this.authorName = getOrElse(diff, "authorName", this.authorName);
-            this.authorEmail = getOrElse(diff, "authorEmail", this.authorEmail);
-            this.baseCommit = getOrElse(diff, "sourceControlBaseRevision", this.baseCommit);
-            this.branch = getOrElse(diff, "branch", this.branch);
-
-
+        JsonObject diff = result.getJsonResult().getAsJsonObject(this.diffId);
+        this.authorName = getOrElse(diff, "authorName", this.authorName);
+        this.authorEmail = getOrElse(diff, "authorEmail", this.authorEmail);
+        this.baseCommit = getOrElse(diff, "sourceControlBaseRevision", this.baseCommit);
+        this.branch = getOrElse(diff, "branch", this.branch);
+        this.revisionId = getOrElse(diff, "revisionID", this.revisionId);
 
         return true;
     }

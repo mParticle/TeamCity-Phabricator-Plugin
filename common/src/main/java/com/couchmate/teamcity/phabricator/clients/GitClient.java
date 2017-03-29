@@ -22,6 +22,20 @@ public final class GitClient {
 
     public BuildProblemData refreshGit()
     {
+        CommandBuilder.Command fetch = new CommandBuilder()
+                .setWorkingDir(this.workingDir)
+                .setCommand(this.GIT_COMMAND)
+                .setAction("fetch")
+                .build();
+
+        int fetchCode = fetch.exec().join();
+        if (fetchCode > 0)
+        {
+            return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "GIT FETCH",
+                    String.format("Unable to git fetch from origin: %s",
+                            fetch.toString()));
+        }
+
         CommandBuilder.Command reset = new CommandBuilder()
                 .setWorkingDir(this.workingDir)
                 .setCommand(this.GIT_COMMAND)
@@ -34,7 +48,9 @@ public final class GitClient {
         if (resetCode > 0)
         {
             return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "GIT RESET",
-                    "Unable to git reset to base commit " + this.baseCommit);
+                    String.format("Unable to git reset to base commit %s: %s.",
+                            this.baseCommit,
+                            reset.toString()));
         }
 
         CommandBuilder.Command clean = new CommandBuilder()
@@ -49,7 +65,7 @@ public final class GitClient {
         if (cleanCode > 0)
         {
             return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "GIT CLEAN",
-                    "Unable to git clean.");
+                    "Unable to git clean: " + clean.toString());
         }
 
         return null;

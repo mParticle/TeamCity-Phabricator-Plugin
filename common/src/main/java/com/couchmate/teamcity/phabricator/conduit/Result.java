@@ -29,6 +29,11 @@ public final class Result {
     public String getErrorInfo(){ return this.errorInfo; }
 
     public JsonObject getJsonResult() {
+        if (this.result == null)
+        {
+            return null;
+        }
+
         return this.result.getAsJsonObject();
     }
 }

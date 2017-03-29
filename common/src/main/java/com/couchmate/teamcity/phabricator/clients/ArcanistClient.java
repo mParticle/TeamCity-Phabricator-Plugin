@@ -28,7 +28,7 @@ public final class ArcanistClient {
             CommandBuilder.Command patch = new CommandBuilder()
                     .setCommand(arcPath)
                     .setAction("patch")
-                    .setArg(review.getDiffId().startsWith("D") ? review.getDiffId() : "D" + review.getDiffId())
+                    .setArg(review.getRevisionId().startsWith("D") ? review.getRevisionId() : "D" + review.getRevisionId())
                     .setWorkingDir(this.workingDir)
                     .setFlag("--nobranch")
                     .setFlag("--nocommit")
@@ -40,7 +40,9 @@ public final class ArcanistClient {
             if (patchCode > 0)
             {
                 return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "ARC PATCH",
-                        String.format("Arcanist returned an error code of %s, assuming patch failed.", patchCode));
+                        String.format("Arcanist returned an error code of %s, patch failed using command %s.",
+                                patchCode,
+                                patch.toString()));
             }
         } catch (Exception e) {
             return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "ARC PATCH",
