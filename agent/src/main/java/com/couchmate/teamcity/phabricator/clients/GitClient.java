@@ -1,7 +1,6 @@
 package com.couchmate.teamcity.phabricator.clients;
 
 import com.couchmate.teamcity.phabricator.CommandBuilder;
-import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.BuildProblemData;
 
 public final class GitClient {
@@ -10,7 +9,6 @@ public final class GitClient {
     private final String workingDir;
     private String baseCommit;
 
-    private static Logger Log = Logger.getInstance(GitClient.class.getName());
     /**
      * @param baseCommit The base commit. This has the side-effect of telling us which branch to pull down as the base.
      * @param workingDir Sets the directory for the command to be executed in. This should be the source code root.

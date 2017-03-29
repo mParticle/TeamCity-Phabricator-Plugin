@@ -58,7 +58,7 @@ public final class ConduitClient {
 
     private CloseableHttpClient createHttpClient() {
         HttpClient client = new HttpClient(true);
-        return client.getCloseableHttpClient();
+        return client.getCloseableHttpClient(Log);
     }
 
     public Result submitDifferentialComment(DifferentialCommentMessage message){

@@ -1,26 +1,26 @@
 package com.couchmate.teamcity.phabricator;
 
-import javax.net.ssl.SSLContext;
-import java.security.cert.X509Certificate;
-import java.security.cert.CertificateException;
-import org.apache.http.conn.socket.*;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.config.RegistryBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import org.apache.http.config.Registry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+
+import javax.net.ssl.SSLContext;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 /**
  * Created by david on 8/7/16.
  */
 public class HttpClient {
-    private PhabLogger logger;
     private boolean selfSigned;
 
     public HttpClient() {
@@ -31,9 +31,8 @@ public class HttpClient {
         selfSigned = trustSelfSigned;
     }
 
-    public CloseableHttpClient getCloseableHttpClient() {
+    public CloseableHttpClient getCloseableHttpClient(Logger log) {
         SSLContext sslContext;
-        logger = new PhabLogger();
         try {
             if(selfSigned) {
                 sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustSelfSignedStrategy() {
@@ -54,7 +53,7 @@ public class HttpClient {
             CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).build();
             return httpClient;
         } catch (Exception e) {
-            this.logger.warn("http client error", e);
+            log.warn("http client error", e);
             return null;
         }
     }

@@ -64,9 +64,10 @@ public class Agent extends AgentLifeCycleAdapter {
 
                 if (!result)
                 {
-                    buildLogger.logBuildProblem(BuildProblemData.createBuildProblem("PHAB_DIFF_FAILURE",
+                    BuildProblemData problem = BuildProblemData.createBuildProblem("PHAB_DIFF_FAILURE",
                             "PHAB_DIFF_FAILURE",
-                            "Failed to fetch the full diff information from Phabricator."));
+                            "Failed to fetch the full diff information from Phabricator.");
+                    buildLogger.buildFailureDescription(problem.getDescription());
                 }
                 else
                 {

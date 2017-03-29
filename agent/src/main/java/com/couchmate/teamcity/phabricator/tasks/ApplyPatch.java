@@ -38,7 +38,6 @@ public class ApplyPatch extends Task {
         BuildProblemData gitProblem = gitClient.refreshGit();
         if (gitProblem != null)
         {
-            this.logger.logBuildProblem(gitProblem);
             this.logger.buildFailureDescription(gitProblem.getDescription());
         }
         this.logger.progressFinished();
@@ -48,7 +47,6 @@ public class ApplyPatch extends Task {
         if (patchProblem != null)
         {
             this.logger.buildFailureDescription(patchProblem.getDescription());
-            this.logger.logBuildProblem(patchProblem);
         }
         this.logger.progressFinished();
     }

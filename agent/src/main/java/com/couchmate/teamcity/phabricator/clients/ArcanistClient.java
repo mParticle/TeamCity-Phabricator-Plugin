@@ -3,12 +3,9 @@ package com.couchmate.teamcity.phabricator.clients;
 import com.couchmate.teamcity.phabricator.CommandBuilder;
 import com.couchmate.teamcity.phabricator.DifferentialReview;
 import com.couchmate.teamcity.phabricator.StringKeyValue;
-import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.BuildProblemData;
 
 public final class ArcanistClient {
-    private static Logger Log = Logger.getInstance(GitClient.class.getName());
-
     private final String conduitToken;
     private final String workingDir;
     private final String arcPath;
