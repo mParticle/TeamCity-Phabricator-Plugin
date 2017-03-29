@@ -43,7 +43,8 @@ public final class AppConfig {
     private final String ENV_HARBORMASTER_PHID = "env.harbormasterTargetPHID";
     private final String REVISION_ID = "revisionId";
     private final String ENV_REVISION_ID = "env.revisionId";
-    private final String SERVER_URL = "teamcity.serverUrl";
+    private final String SERVER_URL = "serverUrl";
+    private final String SERVER_SERVER_URL = "teamcity.serverUrl";
 
     public void parse(){
         enabled = false;
@@ -64,6 +65,10 @@ public final class AppConfig {
                     case SERVER_URL:
                         logger.info(String.format("Found server url: %s", params.get(SERVER_URL)));
                         this.serverUrl = params.get(SERVER_URL);
+                        break;
+                    case SERVER_SERVER_URL:
+                        logger.info(String.format("Found server url: %s", params.get(SERVER_SERVER_URL)));
+                        this.serverUrl = params.get(SERVER_SERVER_URL);
                         break;
                     case CONDUIT_TOKEN:
                         logger.info(String.format("Found conduitToken: %s", params.get(CONDUIT_TOKEN)));

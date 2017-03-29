@@ -9,9 +9,7 @@ import jetbrains.buildServer.agent.*;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Agent extends AgentLifeCycleAdapter {
 
@@ -110,5 +108,11 @@ public class Agent extends AgentLifeCycleAdapter {
     public void buildFinished(@NotNull AgentRunningBuild build, @NotNull BuildFinishedStatus status) {
         super.buildFinished(build, status);
         this.refreshConfig(build);
+        build.getBuildLogger().progressStarted("Phabricator is going to post status.");
+
+
+        build.getBuildLogger().progressFinished();
+        build.addSharedConfigParameter("teamcity.serverUrl", this.appConfig.getServerUrl());
     }
+
 }

@@ -1,8 +1,6 @@
 package com.couchmate.teamcity.phabricator;
 
 import com.couchmate.teamcity.phabricator.clients.ConduitClient;
-
-import com.couchmate.teamcity.phabricator.conduit.DifferentialCommentMessage;
 import com.couchmate.teamcity.phabricator.conduit.HarbormasterBuildStatusMessage;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.util.EventDispatcher;
@@ -31,8 +29,8 @@ public class Server extends BuildServerAdapter {
     @Override
     public void buildTypeAddedToQueue(@NotNull SQueuedBuild queuedBuild) {
         super.buildTypeAddedToQueue(queuedBuild);
-        if (queuedBuild.getBuildType().getParameters().containsKey("teamcity.serverUrl")) {
-            this.serverUrl = queuedBuild.getBuildType().getParameters().get("teamcity.serverUrl");
+        if (queuedBuild.getBuildType().getParameters().containsKey("serverUrl")) {
+            this.serverUrl = queuedBuild.getBuildType().getParameters().get("serverUrl");
         }
 
         Collection<SBuildFeatureDescriptor> phabBuildFeature = queuedBuild.getBuildType().getBuildFeaturesOfType("phabricator");
@@ -53,10 +51,6 @@ public class Server extends BuildServerAdapter {
                         appConfig.getHarbormasterTargetPHID(),
                         MessageType.WORK,
                         null));
-                conduitClient.submitDifferentialComment(DifferentialCommentMessage.generateBuildMessage(
-                        MessageType.WORK,
-                        appConfig.getRevisionId(),
-                        this.serverUrl + "/viewLog.html?buildId=" + queuedBuild.getItemId()));
             }
         }
     }

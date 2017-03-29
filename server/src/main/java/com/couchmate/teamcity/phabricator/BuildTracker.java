@@ -3,6 +3,7 @@ package com.couchmate.teamcity.phabricator;
 import com.couchmate.teamcity.phabricator.clients.ConduitClient;
 import com.couchmate.teamcity.phabricator.conduit.DifferentialCommentMessage;
 import com.couchmate.teamcity.phabricator.conduit.HarbormasterBuildStatusMessage;
+import com.couchmate.teamcity.phabricator.conduit.HarbormasterUriArtifactMessage;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.messages.Status;
@@ -37,12 +38,12 @@ public class BuildTracker {
         if (!appConfig.isEnabled()) {
             try {
                 Map<String, String> params = new HashMap<>();
-                //params.putAll(this.build.getBuildOwnParameters());
+                params.putAll(this.build.getBuildOwnParameters());
                 params.putAll(this.build.getValueResolver().resolve(this.build.getBuildPromotion().getParameters()));
                 params.putAll(this.build.getBuildFeaturesOfType("phabricator").iterator().next().getParameters());
                 for (String param : params.keySet()) {
                     if (param != null) {
-                        Loggers.AGENT.info(String.format("Found %s", param));
+                        Loggers.SERVER.info(String.format("Found %s", param));
                     }
                 }
                 this.appConfig.setParams(params);
@@ -68,6 +69,13 @@ public class BuildTracker {
                  String buildInfo = this.appConfig.getServerUrl() + "/viewLog.html?buildId=" + build.getBuildId();
                  DifferentialCommentMessage comment = DifferentialCommentMessage.generateBuildMessage(MessageType.fromStatus(status), this.appConfig.getRevisionId(), buildInfo);
                  this.conduitClient.submitDifferentialComment(comment);
+
+                 HarbormasterUriArtifactMessage artifactMessage = new HarbormasterUriArtifactMessage(
+                         buildInfo,
+                         this.appConfig.getHarbormasterTargetPHID(),
+                         this.appConfig.getConduitToken()
+                 );
+                 this.conduitClient.submitHarbormasterArtifact(artifactMessage);
              }
              Loggers.SERVER.info(this.build.getBuildNumber() + " finished");
         }
