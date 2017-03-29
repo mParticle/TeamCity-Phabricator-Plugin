@@ -1,9 +1,6 @@
 package com.couchmate.teamcity.phabricator.tasks;
 
-import com.couchmate.teamcity.phabricator.AppConfig;
-import com.couchmate.teamcity.phabricator.HttpClient;
-import com.couchmate.teamcity.phabricator.HttpRequestBuilder;
-import com.couchmate.teamcity.phabricator.StringKeyValue;
+import com.couchmate.teamcity.phabricator.*;
 import com.google.gson.Gson;
 import jetbrains.buildServer.agent.BuildFinishedStatus;
 import org.apache.http.client.methods.HttpPost;
@@ -14,7 +11,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
  */
 public class HarbormasterBuildStatus extends Task {
 
-    private AppConfig appConfig;
+    private AgentConfig appConfig;
     private BuildFinishedStatus buildFinishedStatus;
     private Gson gson;
     private HttpPost httpPost = null;
@@ -22,7 +19,7 @@ public class HarbormasterBuildStatus extends Task {
     private HarbormasterBuildStatus(){}
 
     public HarbormasterBuildStatus(
-            final AppConfig appConfig,
+            final AgentConfig appConfig,
             final BuildFinishedStatus buildFinishedStatus
     ){
         this.appConfig = appConfig;

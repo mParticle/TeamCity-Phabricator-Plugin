@@ -1,6 +1,6 @@
 package com.couchmate.teamcity.phabricator.tasks;
 
-import com.couchmate.teamcity.phabricator.AppConfig;
+import com.couchmate.teamcity.phabricator.AgentConfig;
 import com.couchmate.teamcity.phabricator.DifferentialReview;
 import com.couchmate.teamcity.phabricator.clients.ArcanistClient;
 import com.couchmate.teamcity.phabricator.clients.GitClient;
@@ -14,16 +14,14 @@ import jetbrains.buildServer.agent.BuildRunnerContext;
 public class ApplyPatch extends Task {
 
     private BuildProgressLogger logger;
-    private AppConfig appConfig;
+    private AgentConfig appConfig;
     private GitClient gitClient = null;
     private ArcanistClient arcanistClient = null;
-    private BuildRunnerContext runner;
     private DifferentialReview review;
 
-    public ApplyPatch(BuildRunnerContext runner, AppConfig appConfig, DifferentialReview review){
+    public ApplyPatch(BuildRunnerContext runner, AgentConfig appConfig, DifferentialReview review){
         this.appConfig = appConfig;
         this.logger = runner.getBuild().getBuildLogger();
-        this.runner = runner;
         this.review = review;
     }
 

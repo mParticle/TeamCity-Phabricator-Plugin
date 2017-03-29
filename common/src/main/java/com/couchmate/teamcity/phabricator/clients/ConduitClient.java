@@ -4,7 +4,6 @@ import com.couchmate.teamcity.phabricator.*;
 import com.couchmate.teamcity.phabricator.conduit.*;
 import com.google.gson.Gson;
 import com.intellij.openapi.diagnostic.Logger;
-import jetbrains.buildServer.log.Loggers;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
@@ -16,7 +15,7 @@ import java.net.URLEncoder;
 import java.util.List;
 
 public final class ConduitClient {
-    private static Logger Log = Logger.getInstance(ConduitClient.class.getName());
+    private Logger Log;
 
     private final String conduitURL;
     private final String conduitScheme;
@@ -28,8 +27,9 @@ public final class ConduitClient {
             final String conduitURL,
             final String conduitScheme,
             final String apiKey,
-            final PhabLogger logger
+            final Logger logger
     ){
+        this.Log = logger;
         this.conduitURL = conduitURL;
         this.conduitScheme = conduitScheme;
         this.apiKey = apiKey;
@@ -144,7 +144,9 @@ public final class ConduitClient {
             CloseableHttpResponse response = httpClient.execute(builder.build());
             try
             {
-                Loggers.AGENT.info("Received an HTTP " + response.getStatusLine().getStatusCode() + " from Conduit.");
+                Log.info(String.format("Received an HTTP %s from Conduit for %s.",
+                        response.getStatusLine().getStatusCode(),
+                        path));
 
                 String responseBody = EntityUtils.toString(response.getEntity());
 
@@ -164,7 +166,7 @@ public final class ConduitClient {
                 response.close();
             }
         } catch ( TCPhabException | URISyntaxException | IOException e){
-            Loggers.AGENT.warn("Conduit call to " + path + " failed.", e);
+            Log.warn("Conduit call to " + path + " failed.", e);
             return null;
         }
     }

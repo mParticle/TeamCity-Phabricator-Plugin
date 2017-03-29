@@ -6,77 +6,65 @@ import com.couchmate.teamcity.phabricator.tasks.ApplyPatch;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.BuildProblemData;
 import jetbrains.buildServer.agent.*;
+import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Agent extends AgentLifeCycleAdapter {
+    private static Logger Log = Loggers.AGENT;
 
-    private static Logger Log = Logger.getInstance(ConduitClient.class.getName());
-    private BuildProgressLogger buildLogger = null;
-    private PhabLogger logger = null;
-    private AppConfig appConfig = null;
+    private AgentConfig appConfig = null;
     private Collection<AgentBuildFeature> buildFeatures = null;
     private ConduitClient conduitClient = null;
-    private boolean first = true;
-    private Map<String, Integer> unique;
-    private AgentRunningBuild runningBuild = null;
-    public Agent(
-            @NotNull final EventDispatcher<AgentLifeCycleListener> eventDispatcher,
-            @NotNull final PhabLogger phabLogger,
-            @NotNull final AppConfig appConfig
-    ) {
+
+    public Agent(@NotNull final EventDispatcher<AgentLifeCycleListener> eventDispatcher) {
         eventDispatcher.addListener(this);
-        this.logger = phabLogger;
-        this.appConfig = appConfig;
-        this.logger.info("Instantiated");
     }
 
     @Override
     public void buildStarted(@NotNull AgentRunningBuild runningBuild) {
         super.buildStarted(runningBuild);
-        this.logger.setBuildLogger(runningBuild.getBuildLogger());
-        this.runningBuild = runningBuild;
-        this.unique = new HashMap<String, Integer>();
     }
 
     private void refreshConfig(AgentRunningBuild build) {
         this.buildFeatures = build.getBuildFeaturesOfType("phabricator");
-        this.appConfig.setParams(null);
-        this.appConfig.setEnabled(false);
         if (!this.buildFeatures.isEmpty()) {
             try {
                 Map<String, String> configs = new HashMap<>();
                 configs.putAll(build.getSharedBuildParameters().getEnvironmentVariables());
                 configs.putAll(build.getSharedConfigParameters());
                 configs.putAll(this.buildFeatures.iterator().next().getParameters());
-                this.appConfig.setParams(configs);
-                this.appConfig.setLogger(this.logger);
-                this.appConfig.parse();
-                int count = this.unique.containsKey(this.appConfig.getHarbormasterTargetPHID()) ? this.unique.get(this.appConfig.getHarbormasterTargetPHID()) : 0;
-                this.unique.put(this.appConfig.getHarbormasterTargetPHID(), count + 1);
-              } catch (Exception e) { this.logger.warn("Build Started Error: ", e); }
+                this.appConfig = new AgentConfig(configs);
+              }
+              catch (Exception e) { Log.warn("Phabricator Build Started Error: ", e); }
          }
     }
 
     @Override
     public void beforeRunnerStart(@NotNull BuildRunnerContext runner) {
+        BuildProgressLogger buildLogger = runner.getBuild().getBuildLogger();
         this.refreshConfig(runner.getBuild());
+
         if (this.appConfig.isEnabled()) {
-            runner.getBuild().getBuildLogger().activityStarted("Phabricator Plugin", "Applying Differential Patch");
+            buildLogger.activityStarted("Phabricator Plugin", "Applying Differential Diff");
+
             this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
-            this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), this.logger);
+            this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), Log);
+
             if(this.appConfig.shouldPatch()) {
                 DifferentialReview review = new DifferentialReview(this.conduitClient);
 
-                runner.getBuild().getBuildLogger().progressStarted("Fetching details diff " + this.appConfig.getDiffId() + " from Phabricator server.");
-                boolean result = review.fetchReviewData(this.appConfig.getNumericDiffId());
-                runner.getBuild().getBuildLogger().progressFinished();
+                buildLogger.progressStarted("Fetching details for diff " + this.appConfig.getDiffId() + " from Phabricator server.");
+                boolean result = review.fetchReviewData(this.appConfig.getDiffId());
+                buildLogger.progressFinished();
 
                 if (!result)
                 {
-                    runner.getBuild().getBuildLogger().logBuildProblem(BuildProblemData.createBuildProblem("PHAB_DIFF_FAILURE",
+                    buildLogger.logBuildProblem(BuildProblemData.createBuildProblem("PHAB_DIFF_FAILURE",
                             "PHAB_DIFF_FAILURE",
                             "Failed to fetch the full diff information from Phabricator."));
                 }
@@ -92,9 +80,9 @@ public class Agent extends AgentLifeCycleAdapter {
                     this.conduitClient.submitDifferentialComment(message);
                 }
             }
-        }
-        runner.getBuild().getBuildLogger().activityFinished("Phabricator Plugin", "Applying Differential Patch");
 
+            buildLogger.activityFinished("Phabricator Plugin", "Applying Differential Diff");
+        }
 
         super.beforeRunnerStart(runner);
     }
@@ -109,8 +97,6 @@ public class Agent extends AgentLifeCycleAdapter {
         super.buildFinished(build, status);
         this.refreshConfig(build);
         build.getBuildLogger().progressStarted("Phabricator is going to post status.");
-
-
         build.getBuildLogger().progressFinished();
         build.addSharedConfigParameter("teamcity.serverUrl", this.appConfig.getServerUrl());
     }

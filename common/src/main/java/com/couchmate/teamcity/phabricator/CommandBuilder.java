@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.couchmate.teamcity.phabricator.PhabLogger;
 
 public final class CommandBuilder {
 
@@ -13,7 +12,6 @@ public final class CommandBuilder {
     private String action = null;
     private String workingDir = null;
     private List<String> args = new ArrayList<String>();
-    private PhabLogger logger = null;
 
     private static Boolean isNullOrEmpty(Object o){
         if(o == null) return true;
