@@ -2,17 +2,25 @@ package com.couchmate.teamcity.phabricator.clients;
 
 import com.couchmate.teamcity.phabricator.DifferentialReview;
 import jetbrains.buildServer.log.Loggers;
+import junit.framework.TestCase;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by mbenua on 3/28/2017.
  */
-class ConduitClientTest {
+public final class ConduitClientTest extends TestCase {
+
+    public ConduitClientTest(String name) {
+        super(name);
+    }
 
     @Test
-    void getDiffDetailsTest() {
+    public void testPassing() {
+        assertTrue(true);
+    }
+
+    @Test
+    public void testGetDiffDetails() {
 
         ConduitClient client = new ConduitClient(
                 "phabricator.corp.mparticle.com",
@@ -23,5 +31,6 @@ class ConduitClientTest {
         boolean result = review.fetchReviewData("15");
         assertTrue(result);
     }
+
 
 }
