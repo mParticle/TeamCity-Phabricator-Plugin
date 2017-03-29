@@ -90,10 +90,6 @@ public final class ServerConfig {
         return this.serverConfig.get(CONDUIT_TOKEN);
     }
 
-    public String getDiffId() {
-        return this.serverConfig.get(DIFF_ID);
-    }
-
     /**
      * This is what shows up in a Phabricator URL prefixed by D, for example in
      * http://my.phabricator.com/D123
