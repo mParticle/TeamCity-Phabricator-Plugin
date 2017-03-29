@@ -167,6 +167,15 @@ public final class AppConfig {
         return this.diffId;
     }
 
+    public String getNumericDiffId() {
+        if (this.diffId.startsWith("D") || this.diffId.startsWith("d"))
+        {
+            return this.diffId.substring(1);
+        }
+
+        return this.diffId;
+    }
+
     public String getRevisionId() {
         return this.revisionId;
     }

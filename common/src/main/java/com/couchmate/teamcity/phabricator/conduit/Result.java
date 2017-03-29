@@ -1,34 +1,34 @@
 package com.couchmate.teamcity.phabricator.conduit;
 
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-import groovy.json.JsonSlurper;
-import net.sf.json.JSONObject;
 
 public final class Result {
 
-    private String result;
+    private JsonElement result;
+
     @SerializedName("error_code")
     private String errorCode;
+
     @SerializedName("error_info")
     private String errorInfo;
 
     private Result(){}
     public Result(
-            final String result,
+            final JsonElement result,
             final String errorCode,
-            final String errorInfo
-    ){
-        this.result = result;
+            final String errorInfo){
         this.errorCode = errorCode;
         this.errorInfo = errorInfo;
+        this.result = result;
     }
 
-    public String getResult(){ return this.result; }
     public String getErrorCode(){ return this.errorCode; }
     public String getErrorInfo(){ return this.errorInfo; }
 
-    public JSONObject getJsonResult() {
-        JsonSlurper jsonParser = new JsonSlurper();
-        return (JSONObject)jsonParser.parseText(this.result);
+    public JsonObject getJsonResult() {
+        return this.result.getAsJsonObject();
     }
 }

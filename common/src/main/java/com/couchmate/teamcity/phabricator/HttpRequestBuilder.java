@@ -1,14 +1,11 @@
 package com.couchmate.teamcity.phabricator;
 
-import com.couchmate.teamcity.phabricator.TCPhabException;
-
 import org.apache.http.ParseException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
@@ -102,10 +99,6 @@ public final class HttpRequestBuilder {
             this.port = 443;
         }
         if(CommonUtils.isNullOrEmpty(path)) throw new TCPhabException("Must provide a path");
-        System.out.println(this.scheme);
-        System.out.println(this.host);
-        System.out.println(this.port);
-        System.out.println(this.path);
         try {
 			System.out.println(EntityUtils.toString(new UrlEncodedFormEntity(this.formParams)));
 		} catch (ParseException e1) {

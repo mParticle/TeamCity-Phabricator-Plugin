@@ -4,6 +4,7 @@ import com.couchmate.teamcity.phabricator.MessageType;
 import com.couchmate.teamcity.phabricator.UnitTestResult;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -47,7 +48,7 @@ public final class HarbormasterBuildStatusMessage extends MessageBase {
 
     public String getBuildPhid() { return this.buildPHID; }
     public String getMessageType() { return this.messageType; }
-    public List<UnitTestResult> getUnitReports() { return this.unitReports; }
+    public List<UnitTestResult> getUnitReports() { return this.unitReports != null ?  this.unitReports : new ArrayList<>(); }
 
 
     public class HarbormasterLintReport {

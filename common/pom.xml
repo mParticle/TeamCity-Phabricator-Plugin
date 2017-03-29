@@ -4,7 +4,7 @@
   <parent>
     <artifactId>teamcity-phabricator-plugin</artifactId>
     <groupId>com.couchmate.teamcity.phabricator</groupId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1</version>
   </parent>
   <artifactId>common</artifactId>
   <packaging>jar</packaging>
@@ -39,18 +39,28 @@
       <version>RELEASE</version>
     </dependency>
     <dependency>
-      <groupId>org.kohsuke.stapler</groupId>
-      <artifactId>json-lib</artifactId>
-      <version>RELEASE</version>
-    </dependency>
-    <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy-all</artifactId>
       <version>RELEASE</version>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
-      <artifactId>groovy-all</artifactId>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
       <version>RELEASE</version>
     </dependency>
     <dependency>
@@ -63,54 +73,9 @@
       <artifactId>json</artifactId>
       <version>RELEASE</version>
     </dependency>
-      <dependency>
-          <groupId>org.jetbrains.teamcity</groupId>
-          <artifactId>hsqldb</artifactId>
-          <version>RELEASE</version>
-      </dependency>
-      <dependency>
-          <groupId>org.jetbrains.teamcity</groupId>
-          <artifactId>server-api</artifactId>
-          <version>RELEASE</version>
-      </dependency>
     <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>server-api</artifactId>
-      <version>RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>server-api</artifactId>
-      <version>RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>server-api</artifactId>
-      <version>RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>server-api</artifactId>
-      <version>RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>server-api</artifactId>
-      <version>RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>server-api</artifactId>
-      <version>RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>server-api</artifactId>
-      <version>RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>server-api</artifactId>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
       <version>RELEASE</version>
     </dependency>
   </dependencies>

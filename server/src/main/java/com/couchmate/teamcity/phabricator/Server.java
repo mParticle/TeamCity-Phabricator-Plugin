@@ -2,6 +2,8 @@ package com.couchmate.teamcity.phabricator;
 
 import com.couchmate.teamcity.phabricator.clients.ConduitClient;
 
+import com.couchmate.teamcity.phabricator.conduit.DifferentialCommentMessage;
+import com.couchmate.teamcity.phabricator.conduit.HarbormasterBuildStatusMessage;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +47,16 @@ public class Server extends BuildServerAdapter {
                 appConfig.getPhabricatorProtocol() + "://" + appConfig.getPhabricatorUrl() + "/D" + appConfig.getRevisionId());
             if (appConfig.reportBegin()) {
                 ConduitClient conduitClient = new ConduitClient(appConfig.getPhabricatorUrl(), appConfig.getPhabricatorProtocol(), appConfig.getConduitToken(), this.logger);
-                conduitClient.submitHarbormasterMessage(appConfig.getHarbormasterTargetPHID(), "work");
-                conduitClient.submitDifferentialComment(appConfig.getRevisionId(), "Build added to queue: " + this.serverUrl + "/viewLog.html?buildId=" + queuedBuild.getItemId());
+
+                conduitClient.submitHarbormasterMessage(new HarbormasterBuildStatusMessage(
+                        appConfig.getConduitToken(),
+                        appConfig.getHarbormasterTargetPHID(),
+                        MessageType.WORK,
+                        null));
+                conduitClient.submitDifferentialComment(DifferentialCommentMessage.generateBuildMessage(
+                        MessageType.WORK,
+                        appConfig.getRevisionId(),
+                        this.serverUrl + "/viewLog.html?buildId=" + queuedBuild.getItemId()));
             }
         }
     }

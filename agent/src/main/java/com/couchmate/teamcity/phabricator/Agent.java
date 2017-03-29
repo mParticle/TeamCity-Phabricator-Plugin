@@ -4,6 +4,7 @@ import com.couchmate.teamcity.phabricator.clients.ConduitClient;
 import com.couchmate.teamcity.phabricator.conduit.DifferentialCommentMessage;
 import com.couchmate.teamcity.phabricator.tasks.ApplyPatch;
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.BuildProblemData;
 import jetbrains.buildServer.agent.*;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -63,19 +64,23 @@ public class Agent extends AgentLifeCycleAdapter {
 
     @Override
     public void beforeRunnerStart(@NotNull BuildRunnerContext runner) {
-        super.beforeRunnerStart(runner);
         this.refreshConfig(runner.getBuild());
-        if (this.appConfig.isEnabled() && this.unique.get(this.appConfig.getHarbormasterTargetPHID()) == 1) {
-            Log.info("Getting Build Id " + runner.getBuild().getBuildId());
-            Log.info("Plugin is enabled, starting patch process");
+        if (this.appConfig.isEnabled()) {
+            runner.getBuild().getBuildLogger().activityStarted("Phabricator Plugin", "Applying Differential Patch");
             this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
-            Log.info("working dir = " + this.appConfig.getWorkingDir());
             this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), this.logger);
             if(this.appConfig.shouldPatch()) {
                 DifferentialReview review = new DifferentialReview(this.conduitClient);
-                if (!review.fetchReviewData(this.appConfig.getDiffId()))
+
+                runner.getBuild().getBuildLogger().progressStarted("Fetching details diff " + this.appConfig.getDiffId() + " from Phabricator server.");
+                boolean result = review.fetchReviewData(this.appConfig.getNumericDiffId());
+                runner.getBuild().getBuildLogger().progressFinished();
+
+                if (!result)
                 {
-                    Log.warn("Failed to fetch the full diff information from Phabricator.");
+                    runner.getBuild().getBuildLogger().logBuildProblem(BuildProblemData.createBuildProblem("PHAB_DIFF_FAILURE",
+                            "PHAB_DIFF_FAILURE",
+                            "Failed to fetch the full diff information from Phabricator."));
                 }
                 else
                 {
@@ -90,6 +95,10 @@ public class Agent extends AgentLifeCycleAdapter {
                 }
             }
         }
+        runner.getBuild().getBuildLogger().activityFinished("Phabricator Plugin", "Applying Differential Patch");
+
+
+        super.beforeRunnerStart(runner);
     }
 
     @Override

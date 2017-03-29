@@ -18,11 +18,7 @@ public class ApplyPatch extends Task {
     private GitClient gitClient = null;
     private ArcanistClient arcanistClient = null;
     private BuildRunnerContext runner;
-    private BuildProblemData buildProblem;
     private DifferentialReview review;
-
-    private static final String GIT_PATCH_FAILURE = "GIT_PATCH_FAILURE";
-    private static final String ARC_PATCH_FAILURE = "ARC_PATCH_FAILURE";
 
     public ApplyPatch(BuildRunnerContext runner, AppConfig appConfig, DifferentialReview review){
         this.appConfig = appConfig;
@@ -40,28 +36,23 @@ public class ApplyPatch extends Task {
 
     @Override
     protected void execute() {
-        this.logger.activityStarted("Phabricator Plugin", "Applying Differential Patch " + this.review.getDiffId());
-        int cleanCode, patchCode, resetCode;
-
-        if (!gitClient.refreshGit())
+        this.logger.progressStarted("Resetting git to commit ID: " + this.review.getBaseCommit() + " as base for branch: " + this.review.getBranch());
+        BuildProblemData gitProblem = gitClient.refreshGit();
+        if (gitProblem != null)
         {
-            buildProblem = BuildProblemData.createBuildProblem(GIT_PATCH_FAILURE,
-                    GIT_PATCH_FAILURE,
-                    String.format("Unable to git reset or git clean for arc diff #%s and base commit %s.",
-                            this.appConfig.getDiffId(),
-                            this.review.getBaseCommit()));
-            this.logger.logBuildProblem(buildProblem);
+            this.logger.logBuildProblem(gitProblem);
+            this.logger.buildFailureDescription(gitProblem.getDescription());
         }
+        this.logger.progressFinished();
 
-        if (!arcanistClient.patch(this.review))
+        this.logger.progressStarted("Attempting an arc patch for diff ID: " + this.review.getDiffId());
+        BuildProblemData patchProblem = arcanistClient.patch(this.review);
+        if (patchProblem != null)
         {
-            buildProblem = BuildProblemData.createBuildProblem(ARC_PATCH_FAILURE,
-                    ARC_PATCH_FAILURE,
-                    "Unable to patch master with this arc diff " + this.review.getDiffId());
-            this.logger.logBuildProblem(buildProblem);
+            this.logger.buildFailureDescription(patchProblem.getDescription());
+            this.logger.logBuildProblem(patchProblem);
         }
-
-        this.logger.activityFinished("Phabricator Plugin", "Finished Applying Differential Patch " + this.review.getDiffId());
+        this.logger.progressFinished();
     }
 
     @Override

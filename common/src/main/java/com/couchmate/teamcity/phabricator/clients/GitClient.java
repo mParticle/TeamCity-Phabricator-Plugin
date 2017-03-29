@@ -2,6 +2,7 @@ package com.couchmate.teamcity.phabricator.clients;
 
 import com.couchmate.teamcity.phabricator.CommandBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.BuildProblemData;
 
 public final class GitClient {
 
@@ -19,21 +20,21 @@ public final class GitClient {
         this.baseCommit = baseCommit;
     }
 
-    public boolean refreshGit()
+    public BuildProblemData refreshGit()
     {
         CommandBuilder.Command reset = new CommandBuilder()
                 .setWorkingDir(this.workingDir)
                 .setCommand(this.GIT_COMMAND)
                 .setAction("reset")
                 .setFlag("--hard")
-                .setFlag(this.baseCommit)
+                .setArg(this.baseCommit)
                 .build();
 
         int resetCode = reset.exec().join();
         if (resetCode > 0)
         {
-            Log.warn("Unable to git reset to base commit " + this.baseCommit);
-            return false;
+            return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "GIT RESET",
+                    "Unable to git reset to base commit " + this.baseCommit);
         }
 
         CommandBuilder.Command clean = new CommandBuilder()
@@ -47,10 +48,10 @@ public final class GitClient {
         int cleanCode = clean.exec().join();
         if (cleanCode > 0)
         {
-            Log.warn("Unable to git clean.");
-            return false;
+            return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "GIT CLEAN",
+                    "Unable to git clean.");
         }
 
-        return true;
+        return null;
     }
 }

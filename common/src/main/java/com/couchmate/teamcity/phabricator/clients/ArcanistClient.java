@@ -4,6 +4,7 @@ import com.couchmate.teamcity.phabricator.CommandBuilder;
 import com.couchmate.teamcity.phabricator.DifferentialReview;
 import com.couchmate.teamcity.phabricator.StringKeyValue;
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.BuildProblemData;
 
 public final class ArcanistClient {
     private static Logger Log = Logger.getInstance(GitClient.class.getName());
@@ -22,7 +23,7 @@ public final class ArcanistClient {
      * @param review The differential review details that need to be patched.
      * @return
      */
-    public boolean patch(DifferentialReview review){
+    public BuildProblemData patch(DifferentialReview review){
         try {
             CommandBuilder.Command patch = new CommandBuilder()
                     .setCommand(arcPath)
@@ -31,20 +32,22 @@ public final class ArcanistClient {
                     .setWorkingDir(this.workingDir)
                     .setFlag("--nobranch")
                     .setFlag("--nocommit")
+                    .setFlag("--force")
                     .setFlagWithValueEquals(new StringKeyValue("--conduit-token", this.conduitToken))
                     .build();
 
             int patchCode = patch.exec().join();
             if (patchCode > 0)
             {
-                Log.warn(String.format("Arcanist returned an error code of %s, assuming patch failed.", patchCode));
-                return false;
+                return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "ARC PATCH",
+                        String.format("Arcanist returned an error code of %s, assuming patch failed.", patchCode));
             }
         } catch (Exception e) {
-            Log.warn("Failed to do arc patch.", e);
-            return false;
+            return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "ARC PATCH",
+                    String.format("Failed to do arc patch with exception: ", e.getMessage()));
+
         }
 
-        return true;
+        return null;
     }
 }

@@ -1,16 +1,13 @@
 package com.couchmate.teamcity.phabricator.tasks;
 
 import com.couchmate.teamcity.phabricator.AppConfig;
-import com.couchmate.teamcity.phabricator.HttpRequestBuilder;
 import com.couchmate.teamcity.phabricator.HttpClient;
+import com.couchmate.teamcity.phabricator.HttpRequestBuilder;
 import com.couchmate.teamcity.phabricator.StringKeyValue;
-import com.couchmate.teamcity.phabricator.conduit.HarbormasterMessage;
 import com.google.gson.Gson;
 import jetbrains.buildServer.agent.BuildFinishedStatus;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
 
 /**
  * Created by mjo20 on 10/31/2015.
@@ -19,7 +16,6 @@ public class HarbormasterBuildStatus extends Task {
 
     private AppConfig appConfig;
     private BuildFinishedStatus buildFinishedStatus;
-    private HarbormasterMessage harbormasterMessage;
     private Gson gson;
     private HttpPost httpPost = null;
 
