@@ -20,7 +20,6 @@ public final class ServerConfig {
     private final String PHAB_URL = "tcphab.phabricatorUrl";
     private final String PHAB_PROTOCOL = "tcphab.phabricatorProtocol";
     private final String CONDUIT_TOKEN = "tcphab.conduitToken";
-    private final String REPORT_BEGIN = "tcphab.reportBegin";
 
     private final String DIFF_ID = "env.diffId";
     private final String REVISION_ID = "env.revisionId";
@@ -42,7 +41,6 @@ public final class ServerConfig {
         }
 
         this.serverConfig.put(SERVER_URL, params.get(SERVER_URL));
-        this.serverConfig.put(REPORT_BEGIN, params.get(REPORT_BEGIN));
         this.serverConfig.put(CONDUIT_TOKEN, params.get(CONDUIT_TOKEN));
 
         this.serverConfig.put(DIFF_ID, params.get(DIFF_ID));
@@ -104,10 +102,5 @@ public final class ServerConfig {
 
     public Boolean isEnabled() {
         return this.canRun;
-    }
-
-
-    public Boolean reportBegin() {
-        return "true".equals(this.serverConfig.get(REPORT_BEGIN));
     }
 }

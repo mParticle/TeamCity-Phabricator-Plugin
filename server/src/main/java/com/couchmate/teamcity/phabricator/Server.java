@@ -35,15 +35,12 @@ public class Server extends BuildServerAdapter {
             queuedBuild.getBuildPromotion().setBuildComment(queuedBuild.getTriggeredBy().getUser(),
                 appConfig.getPhabricatorProtocol() + "://" + appConfig.getPhabricatorUrl() + "/D" + appConfig.getRevisionId());
 
-            if (appConfig.reportBegin()) {
-                ConduitClient conduitClient = new ConduitClient(appConfig.getPhabricatorUrl(), appConfig.getPhabricatorProtocol(), appConfig.getConduitToken(), Log);
-
-                conduitClient.submitHarbormasterMessage(new HarbormasterBuildStatusMessage(
-                        appConfig.getConduitToken(),
-                        appConfig.getHarbormasterTargetPHID(),
-                        MessageType.WORK,
-                        null));
-            }
+            ConduitClient conduitClient = new ConduitClient(appConfig.getPhabricatorUrl(), appConfig.getPhabricatorProtocol(), appConfig.getConduitToken(), Log);
+            conduitClient.submitHarbormasterMessage(new HarbormasterBuildStatusMessage(
+                    appConfig.getConduitToken(),
+                    appConfig.getHarbormasterTargetPHID(),
+                    MessageType.WORK,
+                    null));
         }
     }
 
