@@ -11,7 +11,6 @@ import jetbrains.buildServer.serverSide.BuildStatisticsOptions;
 import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.STestRun;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +40,7 @@ public class BuildTracker {
 
 
         if (appConfig != null && appConfig.isEnabled()) {
-             ArrayList<UnitTestResult> testResults = createResults(build.getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS).getAllTests());
+             UnitTestResults testResults = createResults(build.getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS).getAllTests());
 
              Status status = this.build.getBuildStatus();
              HarbormasterBuildStatusMessage buildMessage = new HarbormasterBuildStatusMessage(
@@ -52,7 +51,7 @@ public class BuildTracker {
              this.conduitClient.submitHarbormasterMessage(buildMessage);
 
              String buildInfo = appConfig.getServerUrl() + "/viewLog.html?buildId=" + build.getBuildId();
-             DifferentialCommentMessage comment = DifferentialCommentMessage.generateBuildMessage(MessageType.fromStatus(status), appConfig.getRevisionId(), buildInfo);
+             DifferentialCommentMessage comment = DifferentialCommentMessage.generateBuildMessage(MessageType.fromStatus(status), appConfig.getRevisionId(), buildInfo, testResults);
              this.conduitClient.submitDifferentialComment(comment);
 
              HarbormasterUriArtifactMessage artifactMessage = new HarbormasterUriArtifactMessage(
@@ -66,16 +65,16 @@ public class BuildTracker {
         }
     }
 
-    private static ArrayList<UnitTestResult> createResults(List<STestRun> tests) {
-        ArrayList<UnitTestResult> results = new ArrayList<>();
+    private static UnitTestResults createResults(List<STestRun> tests) {
+        UnitTestResults results = new UnitTestResults();
 
         if (tests != null) {
             for (STestRun test : tests) {
-                results.add(new UnitTestResult(
+                results.addTest(
                         test.getTest().getName().getAsString(),
-                        MessageType.fromStatus(test.getStatus()),
                         test.getTest().getName().getClassName(),
-                        test.getDuration()));
+                        test.getDuration(),
+                        MessageType.fromStatus(test.getStatus()));
             }
         }
 

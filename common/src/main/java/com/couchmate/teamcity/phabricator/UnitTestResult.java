@@ -43,4 +43,5 @@ public class UnitTestResult {
 
     public String getTestName() { return this.testName; }
     public String getTestResult() { return this.resultType; }
+    public int getTestDuration() { return this.testDuration; }
 }

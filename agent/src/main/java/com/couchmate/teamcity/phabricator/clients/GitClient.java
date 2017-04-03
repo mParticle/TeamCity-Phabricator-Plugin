@@ -2,6 +2,7 @@ package com.couchmate.teamcity.phabricator.clients;
 
 import com.couchmate.teamcity.phabricator.CommandBuilder;
 import jetbrains.buildServer.BuildProblemData;
+import jetbrains.buildServer.log.Loggers;
 
 public final class GitClient {
 
@@ -27,11 +28,9 @@ public final class GitClient {
                 .build();
 
         int fetchCode = fetch.exec().join();
-        if (fetchCode > 0)
-        {
-            return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "GIT FETCH",
-                    String.format("Unable to git fetch from origin: %s",
-                            fetch.toString()));
+        if (fetchCode > 0) {
+            // Note: it's okay for the fetch to fail, because there's a chance that it might not have been needed.
+            Loggers.AGENT.warn("Failed to run git fetch. Assuming git is up to date and continuing attempt to patch.");
         }
 
         CommandBuilder.Command reset = new CommandBuilder()
@@ -43,8 +42,7 @@ public final class GitClient {
                 .build();
 
         int resetCode = reset.exec().join();
-        if (resetCode > 0)
-        {
+        if (resetCode > 0) {
             return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "GIT RESET",
                     String.format("Unable to git reset to base commit %s: %s.",
                             this.baseCommit,
@@ -60,8 +58,7 @@ public final class GitClient {
                 .build();
 
         int cleanCode = clean.exec().join();
-        if (cleanCode > 0)
-        {
+        if (cleanCode > 0) {
             return BuildProblemData.createBuildProblem("PHABRICATOR_PATCH", "GIT CLEAN",
                     "Unable to git clean: " + clean.toString());
         }
