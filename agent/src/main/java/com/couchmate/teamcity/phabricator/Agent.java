@@ -1,8 +1,12 @@
 package com.couchmate.teamcity.phabricator;
 
+import com.couchmate.teamcity.phabricator.clients.ConduitClient;
+import com.couchmate.teamcity.phabricator.conduit.DifferentialCommentMessage;
 import com.couchmate.teamcity.phabricator.tasks.ApplyPatch;
-import com.couchmate.teamcity.phabricator.tasks.HarbormasterBuildStatus;
+import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.BuildProblemData;
 import jetbrains.buildServer.agent.*;
+import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,64 +15,91 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Agent extends AgentLifeCycleAdapter {
+    private static Logger Log = Loggers.AGENT;
 
-    private BuildProgressLogger buildLogger = null;
-    private PhabLogger logger = null;
-    private AppConfig appConfig = null;
+    private AgentConfig appConfig = null;
     private Collection<AgentBuildFeature> buildFeatures = null;
+    private ConduitClient conduitClient = null;
 
-    public Agent(
-            @NotNull final EventDispatcher<AgentLifeCycleListener> eventDispatcher,
-            @NotNull final PhabLogger phabLogger,
-            @NotNull final AppConfig appConfig
-    ){
+    public Agent(@NotNull final EventDispatcher<AgentLifeCycleListener> eventDispatcher) {
         eventDispatcher.addListener(this);
-        this.logger = phabLogger;
-        this.appConfig = appConfig;
-        this.logger.info("Instantiated");
     }
 
     @Override
     public void buildStarted(@NotNull AgentRunningBuild runningBuild) {
-        //super.buildStarted(runningBuild);
-        //Get logger
-        this.logger.setBuildLogger(runningBuild.getBuildLogger());
-        this.logger.info("Started");
-        this.buildFeatures = runningBuild.getBuildFeaturesOfType("phabricator");
+        super.buildStarted(runningBuild);
+    }
+
+    private void refreshConfig(AgentRunningBuild build) {
+        this.buildFeatures = build.getBuildFeaturesOfType("phabricator");
+        if (!this.buildFeatures.isEmpty()) {
+            try {
+                Map<String, String> configs = new HashMap<>();
+                configs.putAll(build.getSharedBuildParameters().getEnvironmentVariables());
+                configs.putAll(build.getSharedConfigParameters());
+                configs.putAll(this.buildFeatures.iterator().next().getParameters());
+                this.appConfig = new AgentConfig(configs);
+              }
+              catch (Exception e) { Log.warn("Phabricator Build Started Error: ", e); }
+         }
     }
 
     @Override
     public void beforeRunnerStart(@NotNull BuildRunnerContext runner) {
-        //super.beforeRunnerStart(runner);
-        //If plugin enabled, run it
-        try {
-            Map<String, String> configs = new HashMap<>();
-            configs.putAll(runner.getBuildParameters().getEnvironmentVariables());
-            configs.putAll(runner.getConfigParameters());
-            if(!this.buildFeatures.isEmpty()) configs.putAll(this.buildFeatures.iterator().next().getParameters());
-            else logger.info("No build features found");
+        BuildProgressLogger buildLogger = runner.getBuild().getBuildLogger();
+        this.refreshConfig(runner.getBuild());
 
-            this.appConfig.setParams(configs);
-            this.appConfig.setLogger(this.logger);
-            this.appConfig.parse();
+        if (this.appConfig.isEnabled()) {
+            buildLogger.activityStarted("Phabricator Plugin", "Applying Differential Diff");
 
-            if (this.appConfig.isEnabled()) {
-                this.logger.info("Plugin is enabled, starting patch process");
-                this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
+            this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
+            this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), Log);
 
-                new ApplyPatch(runner, this.appConfig, this.logger).run();
+            if(this.appConfig.shouldPatch()) {
+                DifferentialReview review = new DifferentialReview(this.conduitClient);
 
-            } else {
-                this.logger.info("Plugin is disabled.");
+                buildLogger.progressStarted("Fetching details for diff " + this.appConfig.getDiffId() + " from Phabricator server.");
+                boolean result = review.fetchReviewData(this.appConfig.getDiffId());
+                buildLogger.progressFinished();
+
+                if (!result)
+                {
+                    BuildProblemData problem = BuildProblemData.createBuildProblem("PHAB_DIFF_FAILURE",
+                            "PHAB_DIFF_FAILURE",
+                            "Failed to fetch the full diff information from Phabricator.");
+                    buildLogger.buildFailureDescription(problem.getDescription());
+                }
+                else
+                {
+                    new ApplyPatch(runner, this.appConfig, review).run();
+
+                    // Notify Phabricator that the build has started.
+                    DifferentialCommentMessage message = new DifferentialCommentMessage(
+                            this.appConfig.getConduitToken(),
+                            this.appConfig.getRevisionId(),
+                            "Build started: " + this.appConfig.getServerUrl() + "/viewLog.html?buildId=" + runner.getBuild().getBuildId());
+                    this.conduitClient.submitDifferentialComment(message);
+                }
             }
-        } catch (Exception e) { this.logger.warn("BeforeRunnerStartError", e); }
 
+            buildLogger.activityFinished("Phabricator Plugin", "Applying Differential Diff");
+        }
+
+        super.beforeRunnerStart(runner);
     }
 
     @Override
     public void runnerFinished(@NotNull BuildRunnerContext runner, @NotNull BuildFinishedStatus status) {
-        //super.runnerFinished(runner, status);
-        new HarbormasterBuildStatus(this.appConfig, status).run();
+         super.runnerFinished(runner, status);
+    }
+
+    @Override
+    public void buildFinished(@NotNull AgentRunningBuild build, @NotNull BuildFinishedStatus status) {
+        super.buildFinished(build, status);
+        this.refreshConfig(build);
+        build.getBuildLogger().progressStarted("Phabricator is going to post status.");
+        build.getBuildLogger().progressFinished();
+        build.addSharedConfigParameter("teamcity.serverUrl", this.appConfig.getServerUrl());
     }
 
 }
