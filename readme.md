@@ -1,5 +1,3 @@
-***Note***: I'm not actively maintaining this repo at the moment as I'm not using Phabricator or TC. Feel free to submit PRs or fork for your own use!.
-
 #TeamCity Phabricator Plugin
 Real-time build triggers and reporting with JetBrain's TeamCity and Phacility's Phabricator (Harbormaster)
 
@@ -10,8 +8,8 @@ High Level Steps:
 
 1. Upload `teamcity-phabricator-plugin.zip` as an external plugin
 2. Move the PHP files from the Phabricator/ directory of the release into `src/extensions` on your Phabricator instance
-3. ???
-4. Profit
+3. Reboot TeamCity
+4. Profit!
 
 ###TeamCity
 Installing the TeamCity plugin is extremely easy. In the latest release, unzip the release and in the TeamCity folder is `teamcity-phabricator-plugin.zip`. This zip is uploaded directly to your TeamCity instance. The plugin is automatically applied to all of your available Agents but requires a reboot to apply the Server side of the plugin.
@@ -72,7 +70,7 @@ The TeamCity plugin currently reports the following to Phabricator (Harbormaster
 2. Add code coverage reporting
 
 ##Contributions
-This version of the plugin has been heavily modified by the mParticle team.
+This version of the plugin has been heavily modified by the mParticle team and is in active development.
 
 The original plugin was written by [@halfmatthalfcat] with influence from [@sectioneight](https://github.com/sectioneight) on architecture
 (He wrote a majority of [Uber's Jenkins->Phabricator plugin](https://github.com/uber/phabricator-jenkins-plugin),
